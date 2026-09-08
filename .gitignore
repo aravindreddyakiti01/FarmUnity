@@ -1,0 +1,43 @@
+﻿# FarmUnity Root .gitignore
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Production builds
+dist/
+frontend/dist/
+build/
+
+# Maven / Java build artifacts
+target/
+backend/target/
+*.class
+*.jar
+*.war
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Environment and local configs
+.env
+.env.local
+.env.*.local

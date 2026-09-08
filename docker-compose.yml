@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: farmunity-postgres
+    environment:
+      POSTGRES_DB: farmunity
+      POSTGRES_USER: farmunity
+      POSTGRES_PASSWORD: farmunity_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmunity -d farmunity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: farmunity-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/farmunity
+      SPRING_DATASOURCE_USERNAME: farmunity
+      SPRING_DATASOURCE_PASSWORD: farmunity_secret
+      JWT_SECRET: farmunity-jwt-secret-key-for-hackathon-2024-sih-ps33
+      JWT_EXPIRATION_MS: 86400000
+      APP_COMMISSION_RATE: 0.02
+      APP_YIELD_SHORTFALL_THRESHOLD: 0.05
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: farmunity-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+
+volumes:
+  pgdata:
