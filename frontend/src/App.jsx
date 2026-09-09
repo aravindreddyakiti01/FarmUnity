@@ -29,6 +29,7 @@ import { CommitmentLedgerPage } from './pages/shared/CommitmentLedgerPage';
 import { SettlementDashboard } from './pages/shared/SettlementDashboard';
 import { AuditLogPage } from './pages/shared/AuditLogPage';
 import { NotFoundPage } from './pages/shared/NotFoundPage';
+import { TechMethodsPage } from './pages/shared/TechMethodsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -171,6 +172,7 @@ export default function App() {
               <Route path="commitments/:id" element={<CommitmentLedgerPage />} />
               <Route path="settlements/:agreementId" element={<SettlementDashboard />} />
               <Route path="audit/:agreementId" element={<AuditLogPage />} />
+              <Route path="methods" element={<TechMethodsPage />} />
 
               <Route path="*" element={<NotFoundPage />} />
             </Route>

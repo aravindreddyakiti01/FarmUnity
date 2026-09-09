@@ -17,6 +17,7 @@ export const Navbar = () => {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-stone-600 mr-4"><Link to="/methods" className="hover:text-green-700 transition">Methods & Architecture</Link></div>
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 group">
               <div className="p-2 bg-green-600 rounded-lg text-white group-hover:bg-green-700 transition">
