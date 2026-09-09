@@ -223,6 +223,92 @@ export const FarmerDashboard = () => {
         )}
       </div>
 
+      {/* Section 10: Buyer Opportunities Near You */}
+      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-green-700">Cooperative Pooling Demand</div>
+            <h2 className="text-lg font-bold text-stone-900">Buyer Opportunities Near You</h2>
+            <p className="text-xs text-stone-500">
+              Wholesale buyers requisitioning bulk quantities. FarmUnity aggregates nearby farms to fulfill these orders.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-green-800 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+            2 Active Bulk Demands
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 hover:border-green-300 transition space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="px-2.5 py-0.5 rounded-md bg-stone-200 text-stone-800 font-black text-xs uppercase">Paddy</span>
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Bangalore Central Hostel</span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-stone-900">5,000 kg Bulk Requirement</div>
+              <p className="text-xs text-stone-500 mt-0.5">FarmUnity has pooled 3,700 kg &middot; 1,300 kg remaining</p>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-stone-200/80 text-xs space-y-1">
+              <div className="flex justify-between text-stone-600">
+                <span>Target Price:</span>
+                <span className="font-bold text-green-800">₹27.00 – ₹31.00 / kg</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span>Moisture Standard:</span>
+                <span className="font-bold text-stone-800">12.0% – 14.0%</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span>Delivery Window:</span>
+                <span className="font-bold text-stone-800">Next 7–10 Days</span>
+              </div>
+            </div>
+            <div className="pt-1 flex items-center justify-between">
+              <span className="text-[11px] text-stone-500">Your lot can contribute <strong>500 kg</strong></span>
+              <Link
+                to="/agreements/1"
+                className="px-3.5 py-1.5 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
+              >
+                Join Cooperative
+              </Link>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 hover:border-green-300 transition space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="px-2.5 py-0.5 rounded-md bg-stone-200 text-stone-800 font-black text-xs uppercase">Wheat</span>
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Apollo Hospital Kitchens</span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-stone-900">3,000 kg Sharbati Wheat</div>
+              <p className="text-xs text-stone-500 mt-0.5">FarmUnity has pooled 1,800 kg &middot; 1,200 kg remaining</p>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-stone-200/80 text-xs space-y-1">
+              <div className="flex justify-between text-stone-600">
+                <span>Target Price:</span>
+                <span className="font-bold text-green-800">₹28.00 – ₹32.00 / kg</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span>Moisture Standard:</span>
+                <span className="font-bold text-stone-800">11.0% – 13.0%</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span>Delivery Window:</span>
+                <span className="font-bold text-stone-800">Next 12–15 Days</span>
+              </div>
+            </div>
+            <div className="pt-1 flex items-center justify-between">
+              <span className="text-[11px] text-stone-500">Matches your crop &amp; location</span>
+              <Link
+                to="/agreements/1"
+                className="px-3.5 py-1.5 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
+              >
+                Join Cooperative
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Educational Walkthrough Card */}
       <div className="bg-amber-50/70 border border-amber-200 rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center gap-3">
