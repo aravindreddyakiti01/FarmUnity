@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmUnity - Cinematic Silent Video Explainer & Simulator</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+    @keyframes pulseGlow { 0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 10px rgba(16,185,129,0.4)); } 50% { opacity: 1; filter: drop-shadow(0 0 25px rgba(16,185,129,0.8)); } }
+    @keyframes tapFinger { 0%, 100% { transform: scale(1) translate(0, 0); } 50% { transform: scale(0.85) translate(2px, 2px); } }
+    @keyframes slideCaption { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .anim-float { animation: float 3s ease-in-out infinite; }
+    .anim-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+    .tap-anim { animation: tapFinger 1.2s infinite ease-in-out; }
+    .caption-anim { animation: slideCaption 0.35s ease-out forwards; }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .cinema-screen {
+      background: radial-gradient(circle at 50% 20%, #1a3a2a 0%, #0c1813 60%, #050a08 100%);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.8), 0 20px 50px -10px rgba(0,0,0,0.7);
+    }
+    .badge-glow { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+    .danger-glow { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+  </style>
+</head>
+<body class="bg-[#090e0c] text-slate-100 min-h-screen p-3 md:p-6 font-sans select-none antialiased">
+  <div class="max-w-6xl mx-auto space-y-5">
+
+    <!-- Top Nav & Brand -->
+    <header class="glass-panel rounded-2xl p-4 md:p-5 flex flex-wrap items-center justify-between gap-4 border border-emerald-500/20">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-lg flex items-center justify-center">
+          <div class="w-full h-full bg-[#0d1f17] rounded-[10px] flex items-center justify-center text-2xl">🌱</div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-200 to-amber-300">
+              FarmUnity
+            </h1>
+            <span class="text-[10px] tracking-widest font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              Visual Video Mode
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Bringing Farmers, Buyers & Markets Together • 100% Visual Subtitled Walkthrough</p>
+        </div>
+      </div>
+
+      <!-- Mode Switchers & Visual Controls -->
+      <div class="flex items-center flex-wrap gap-2">
+        <div class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+          <span>🔇</span> <span>Pure Silent Mode (No Audio)</span>
+        </div>
+
+        <button id="btn-cc" onclick="toggleCC()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <span id="cc-icon">📝</span> <span id="cc-label">Subtitles: ON</span>
+        </button>
+
+        <div class="flex items-center bg-black/50 p-1 rounded-xl border border-white/10">
+          <button id="btn-mode-journey" onclick="switchMode('journey')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow-md transition">
+            🎬 17-Step Journey
+          </button>
+          <button id="btn-mode-failure" onclick="switchMode('failure')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition">
+            ⚠️ "What If It Fails?"
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Cinema Video Stage -->
+    <main class="cinema-screen rounded-3xl border border-emerald-500/30 overflow-hidden relative shadow-2xl">
+      
+      <!-- Video Screen Header Overlay -->
+      <div class="absolute top-4 left-5 right-5 z-20 flex items-center justify-between pointer-events-none">
+        <div class="flex items-center gap-2">
+          <span id="stage-badge" class="px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 badge-glow">
+            STEP 1 OF 17 • LOGIN & ROLE ACCESS
+          </span>
+          <span id="failure-warning-pill" class="hidden px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 danger-glow animate-pulse">
+            ⚠️ CRISIS RESOLUTION ACTIVE
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 bg-black/60 backdrop-blur px-3 py-1 rounded-full border border-white/10 text-xs font-mono text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span id="video-timer">00:00 / 02:30</span>
+        </div>
+      </div>
+
+      <!-- Center Animation Arena -->
+      <div class="min-h-[440px] md:min-h-[480px] p-6 pt-16 pb-28 flex flex-col items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+        <!-- Dynamic Scene Content -->
+        <div id="cinema-viewport" class="w-full max-w-4xl z-10 flex flex-col items-center justify-center"></div>
+
+        <!-- On-Screen High-Contrast Subtitle Banner (CC) -->
+        <div id="dialogue-bubble" class="absolute bottom-24 z-20 max-w-3xl w-[92%] px-6 py-3.5 rounded-2xl bg-black/90 backdrop-blur-md border-2 border-emerald-500/40 text-center shadow-2xl transition-all duration-300 caption-anim">
+          <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-white/10">
+            <div class="flex items-center gap-2">
+              <span id="speaker-avatar" class="text-base">👨‍🌾</span>
+              <span id="speaker-name" class="text-xs font-black uppercase tracking-widest text-emerald-400">Ramesh (Farmer)</span>
+            </div>
+            <span class="text-[10px] font-mono uppercase bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+              CC • Closed Caption
+            </span>
+          </div>
+          <p id="speaker-quote" class="text-sm md:text-base font-semibold text-white leading-snug">
+            "I can list my wheat harvest straight from my village without any middleman taking a cut!"
+          </p>
+        </div>
+      </div>
+
+      <!-- Cinema Controls Bar -->
+      <div class="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#060b08] via-[#060b08]/90 to-transparent p-4 md:p-5 flex flex-col gap-3">
+        <!-- Progress Bar -->
+        <div class="w-full bg-white/15 hover:bg-white/25 transition h-2.5 rounded-full overflow-hidden cursor-pointer relative" onclick="handleScrub(event)">
+          <div id="timeline-progress" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 w-[5.8%] transition-all duration-300"></div>
+        </div>
+
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <button onclick="changeScene(-1)" title="Previous scene" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition flex items-center justify-center text-sm font-bold">
+              ⏮
+            </button>
+
+            <button id="btn-play-pause" onclick="togglePlay()" class="px-5 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg flex items-center gap-2 active:scale-95 transition">
+              <span id="play-pause-icon">▶</span>
+              <span id="play-pause-text">PLAY VIDEO</span>
+            </button>
+
+            <button onclick="changeScene(1)" title="Next scene" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition flex items-center justify-center text-sm font-bold">
+              ⏭
+            </button>
+
+            <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400 ml-2">
+              <span class="text-white font-bold" id="current-step-display">1</span> / <span id="total-step-display">17</span>
+            </div>
+          </div>
+
+          <!-- Character Indicators -->
+          <div class="flex items-center gap-2 bg-black/60 backdrop-blur px-3 py-1.5 rounded-xl border border-white/10">
+            <div id="tag-farmer" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all duration-300">
+              <span>👨‍🌾</span> Farmer
+            </div>
+            <div id="tag-coordinator" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all duration-300">
+              <span>👩‍💼</span> Coordinator
+            </div>
+            <div id="tag-buyer" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 transition-all duration-300">
+              <span>👨‍💼</span> Buyer
+            </div>
+          </div>
+
+          <!-- Speed Options -->
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-slate-400 text-[10px] uppercase font-bold mr-1">Speed:</span>
+            <button onclick="setSpeed(1)" id="spd-1" class="px-2.5 py-1 rounded bg-white/20 text-white font-bold">1x</button>
+            <button onclick="setSpeed(1.5)" id="spd-15" class="px-2.5 py-1 rounded bg-white/5 text-slate-400 hover:text-white">1.5x</button>
+            <button onclick="setSpeed(2)" id="spd-2" class="px-2.5 py-1 rounded bg-white/5 text-slate-400 hover:text-white">2x</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Narrative Card -->
+    <section class="glass-panel rounded-2xl p-5 border border-white/10">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2">
+          <span id="narrative-step-icon" class="text-2xl">📱</span>
+          <h2 id="narrative-title" class="text-lg md:text-xl font-bold text-white">1. Login & Role Access</h2>
+        </div>
+        <span id="narrative-category" class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          Core Foundation
+        </span>
+      </div>
+      <p id="narrative-desc" class="text-sm md:text-base text-slate-300 leading-relaxed"></p>
+    </section>
+
+    <!-- Navigation Thumbnails Strip -->
+    <section class="glass-panel rounded-2xl p-4 border border-white/10">
+      <div class="flex items-center justify-between mb-3">
+        <h3 id="strip-title" class="text-xs font-bold uppercase tracking-widest text-slate-400">The 17 Journey Milestones</h3>
+        <span class="text-[11px] text-emerald-400">Click any card to jump immediately</span>
+      </div>
+      <div id="scene-strip" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-9 lg:grid-cols-17 gap-2 overflow-x-auto pb-1"></div>
+    </section>
+
+  </div>
+
+  <script>
+    // Pure silent operation
+    let ccEnabled = true;
+    let playInterval = null;
+    let isPlaying = false;
+    let playbackSpeed = 1;
+    let currentMode = 'journey';
+    let currentScene = 0;
+
+    function toggleCC() {
+      ccEnabled = !ccEnabled;
+      document.getElementById('cc-label').innerText = ccEnabled ? 'Subtitles: ON' : 'Subtitles: OFF';
+      document.getElementById('dialogue-bubble').style.display = ccEnabled ? 'block' : 'none';
+    }
+
+    const journeyScenes = [
+      {
+        step: 1,
+        title: "1. Login & Role Access",
+        category: "Authentication & Role Hub",
+        desc: "The user opens the FarmUnity app on their smartphone. A high-tech phone interface lets the user select their role: Farmer, Field Coordinator, or Buyer, unlocking personalized permissions with real-time biometric and OTP security.",
+        speaker: "Ramesh (Farmer)",
+        avatar: "👨‍🌾",
+        quote: "Opening FarmUnity on my phone! It knows I'm a farmer, so it immediately shows my crop listings and current mandi rates.",
+        activeChars: ["farmer", "coordinator", "buyer"],
+        icon: "📱"
+      },
+      {
+        step: 2,
+        title: "2. Offline-First Synchronization",
+        category: "Resilient Field Technology",
+        desc: "Operating deep in rural agricultural zones with zero connectivity? FarmUnity stores listing data, GPS coordinates, and signatures in a local encrypted SQLite database, auto-syncing seamlessly the second internet is detected.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "No signal in the remote fields? No problem at all! The app records everything offline and synchronizes as soon as I reach town.",
+        activeChars: ["coordinator"],
+        icon: "📡",
+        badge: "Offline Cache"
+      },
+      {
+        step: 3,
+        title: "3. Identity & Trust Verification",
+        category: "Anti-Fraud Layer",
+        desc: "Automated Aadhaar/KYC verification and land record validation prevent ghost accounts, fake supply listings, and price manipulation, establishing institutional trust.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "I only source when I have 100% verified farmer identities. FarmUnity guarantees zero counterfeit batches.",
+        activeChars: ["buyer", "coordinator"],
+        icon: "🛡️",
+        badge: "Zero Fake Accounts"
+      },
+      {
+        step: 4,
+        title: "4. Fair Price Calculation Algorithm",
+        category: "Dynamic Fair Economics",
+        desc: "Price isn't dictated by monopolistic middlemen. FarmUnity's pricing engine calculates: Fair Price = Government MSP Base + Crop Grade Factor + Real Distance Kilometer Cost between farmgate and buyer warehouse.",
+        speaker: "Ramesh (Farmer)",
+        avatar: "👨‍🌾",
+        quote: "Transparent formulas mean I get compensated for my quality and travel distance. Fair pay every single time.",
+        activeChars: ["farmer", "buyer"],
+        icon: "⚖️",
+        badge: "Base + Distance Math"
+      },
+      {
+        step: 5,
+        title: "5. Dynamic Harvest Pooling",
+        category: "Aggregation Engine",
+        desc: "When a buyer requests 50 tons, FarmUnity dynamically aggregates grain from 12 nearby smallholder farmers with identical moisture and quality into one certified batch.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Small farmers gain large collective bargaining power when we bundle their produce into unified bulk lots!",
+        activeChars: ["farmer", "coordinator"],
+        icon: "🌾",
+        badge: "Smart Pooling"
+      },
+      {
+        step: 6,
+        title: "6. Buyer Matching & Negotiation",
+        category: "Automated Marketplace",
+        desc: "Automated double-auction matching links buyer orders within a transparent, bounded price corridor (e.g. ₹28 - ₹30/kg) preventing exploitation while providing fair market clearing.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "I need 20 tons at ₹29/kg. The system immediately matched me with a verified cluster in under two minutes!",
+        activeChars: ["buyer", "coordinator"],
+        icon: "🤝",
+        badge: "Corridor Matching"
+      },
+      {
+        step: 7,
+        title: "7. Buyer Fixed Escrow Deposit",
+        category: "Financial Commitment",
+        desc: "To eliminate phantom orders and last-minute buyer default, buyers must lock a refundable fixed security deposit (e.g., ₹50,000) in escrow before procurement starts.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "I've locked ₹50,000 in escrow. The farmers know my demand is 100% genuine and backed by real funds.",
+        activeChars: ["buyer"],
+        icon: "💳",
+        badge: "₹50,000 Escrow Lock"
+      },
+      {
+        step: 8,
+        title: "8. Cryptographic Agreement Lock",
+        category: "Smart Contract Integrity",
+        desc: "Once price, quantity, and collection dates are agreed upon, an unalterable SHA-256 cryptographic agreement hash is minted, legally binding both parties.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Both parties have digitally signed. The agreement hash is locked on the audit ledger — nobody can alter terms.",
+        activeChars: ["farmer", "buyer"],
+        icon: "🔐",
+        badge: "SHA-256 Agreement"
+      },
+      {
+        step: 9,
+        title: "9. Farmgate Pickup & Smart Logistics",
+        category: "Logistics Optimization",
+        desc: "Automated transport routing dispatches carrier trucks straight to the farm clusters. Produce is weighed, tagged with RFID barcodes, and scheduled for transit.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Our refrigerated carrier is arriving at Ramesh's farmgate right on schedule. No waiting at crowded wholesale mandis!",
+        activeChars: ["coordinator"],
+        icon: "🚛",
+        badge: "GPS Fleet Dispatch"
+      },
+      {
+        step: 10,
+        title: "10. Field Collection Verification",
+        category: "Quality Assurance",
+        desc: "The field coordinator performs on-site grain moisture analysis (target <14%), visual grade inspection, and electronic weight verification, logging results with timestamped proof.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Moisture tested at 12.8% — Premium Grade A. Certified and approved for direct milling!",
+        activeChars: ["coordinator", "farmer"],
+        icon: "🔍",
+        badge: "Moisture & Grade Verified"
+      },
+      {
+        step: 11,
+        title: "11. Modern Milling & Processing",
+        category: "Value Addition",
+        desc: "Harvested paddy is routed through high-efficiency partner mills, converting raw grain into vacuum-packed rice ready for commercial kitchens and retail shelves.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Milling output yields 68% premium head rice with minimal broken grains. Processed to the buyer's exact specs.",
+        activeChars: ["coordinator"],
+        icon: "⚙️",
+        badge: "Precision Milling"
+      },
+      {
+        step: 12,
+        title: "12. Bulk Institutional Buyer Network",
+        category: "B2B Fulfillment",
+        desc: "Finished batches are delivered directly to hospitals, hotel chains, university hostels, state canteens, and supermarket retailers, bypassing multiple commission agents.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "We supply 15 hospital kitchens. Getting farm-fresh grains directly saves us 18% in procurement costs!",
+        activeChars: ["buyer"],
+        icon: "🏢",
+        badge: "Hotels, Hospitals & Retail"
+      },
+      {
+        step: 13,
+        title: "13. Delivery Confirmation & QR Scan",
+        category: "Proof of Delivery",
+        desc: "The receiving dock scans the shipment QR code, validates seals and weights, and electronically signs the acceptance certificate.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "Shipment arrived at our central warehouse. Seals intact, quality certified, and receipt approved in the app.",
+        activeChars: ["buyer"],
+        icon: "📦",
+        badge: "Verified Dock Delivery"
+      },
+      {
+        step: 14,
+        title: "14. Instant Transparent Settlement",
+        category: "Automated Banking Payout",
+        desc: "Upon delivery confirmation, the escrow engine triggers instant automated bank transfers: Farmer 1 receives ₹12,000, Farmer 2 receives ₹10,500, Farmer 3 receives ₹8,700.",
+        speaker: "Ramesh (Farmer)",
+        avatar: "👨‍🌾",
+        quote: "Ding! ₹12,000 hit my bank account instantly. No 90-day wait, no bounced checks, no commissions deducted!",
+        activeChars: ["farmer", "buyer", "coordinator"],
+        icon: "💰",
+        badge: "Instant Bank Split"
+      },
+      {
+        step: 15,
+        title: "15. Immutable Audit Trail",
+        category: "Full Traceability",
+        desc: "Every touchpoint — from field listing, moisture test, GPS truck coordinates, to final bank transaction IDs — is recorded on an unalterable audit timeline.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Every single step is logged. If any party ever has a dispute, the complete timeline proves every detail.",
+        activeChars: ["coordinator"],
+        icon: "📜",
+        badge: "100% Traceability"
+      },
+      {
+        step: 16,
+        title: "16. Role-Based Access Governance",
+        category: "Enterprise Security",
+        desc: "Zero privilege escalation: farmers can only edit their listings, field coordinators can only certify quality, and buyers can only approve payments.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "Strict role boundaries give institutional buyers total peace of mind.",
+        activeChars: ["farmer", "coordinator", "buyer"],
+        icon: "👥",
+        badge: "Strict RBAC"
+      },
+      {
+        step: 17,
+        title: "17. The Result: Stronger Communities",
+        category: "Ecosystem Success",
+        desc: "Farmers earn up to 25% more, buyers receive verified high-grade produce at wholesale rates, post-harvest losses drop under 3%, and agricultural communities thrive!",
+        speaker: "Ramesh, Ananya & Vikram",
+        avatar: "🤝",
+        quote: "Fair prices, zero waste, transparent trade. That is the true power of FarmUnity!",
+        activeChars: ["farmer", "coordinator", "buyer"],
+        icon: "🎉",
+        badge: "Empowered Ecosystem"
+      }
+    ];
+
+    const failureScenes = [
+      {
+        step: 1,
+        title: "Failure 1: Farmer Cancels at Harvest",
+        category: "Supply Disruption",
+        desc: "Problem: A farmer falls ill or their crop is damaged by hail.<br><b class='text-emerald-400'>FarmUnity Solution:</b> Dynamic pooling automatically taps verified standby farmers in the same cluster with matching crop specs, fulfilling the order without buyer disruption.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Farmer Suresh had crop damage, so our system seamlessly substituted Ramesh's Grade-A wheat from 2km away!",
+        activeChars: ["farmer", "coordinator"],
+        icon: "❌",
+        badge: "Auto-Rebalancing Pool"
+      },
+      {
+        step: 2,
+        title: "Failure 2: Buyer Cancels Last Minute",
+        category: "Demand Default",
+        desc: "Problem: Buyer attempts to back out after harvest has been picked up.<br><b class='text-emerald-400'>FarmUnity Solution:</b> The buyer's ₹50,000 security deposit is forfeited to compensate farmers for logistics, and the batch is automatically rerouted to waitlisted institutional buyers.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "Our escrow penalty protects farmers against bad-faith buyers. The crop was immediately sold to a hospital canteen.",
+        activeChars: ["buyer", "coordinator"],
+        icon: "🔄",
+        badge: "Escrow Forfeiture Protection"
+      },
+      {
+        step: 3,
+        title: "Failure 3: Insufficient Harvest Quantity",
+        category: "Volume Shortfall",
+        desc: "Problem: Total harvested yield is 15% below estimate.<br><b class='text-emerald-400'>FarmUnity Solution:</b> Micro-farmers in neighboring villages are pooled in real-time to bridge the deficit, or the buyer's bill is prorated with instant agreement update.",
+        speaker: "Ramesh (Farmer)",
+        avatar: "👨‍🌾",
+        quote: "My yield was 20 bags short, so FarmUnity connected my neighbor Patel's farm to complete the truckload!",
+        activeChars: ["farmer", "coordinator"],
+        icon: "⚠️",
+        badge: "Smart Deficit Bridging"
+      },
+      {
+        step: 4,
+        title: "Failure 4: Moisture or Quality Test Fails",
+        category: "Quality Defect",
+        desc: "Problem: Grain moisture exceeds safe limits (>14.5%) after sudden rain.<br><b class='text-emerald-400'>FarmUnity Solution:</b> Rather than rejecting the batch, the load is routed to local solar dryers or reclassified transparently with the buyer's approval.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Excess moisture detected! We rerouted the truck to our partner solar drying hub to bring it down to 12% before loading.",
+        activeChars: ["coordinator", "farmer"],
+        icon: "💧",
+        badge: "Active Quality Remediation"
+      },
+      {
+        step: 5,
+        title: "Failure 5: Vehicle Breakdown En Route",
+        category: "Logistics Failure",
+        desc: "Problem: The grain carrier suffers engine failure on the highway.<br><b class='text-emerald-400'>FarmUnity Solution:</b> IoT tracking alerts the operations hub. A replacement local carrier is dispatched, cargo transferred, and real-time GPS tracking keeps all parties informed.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Carrier breakdown detected via GPS! Backup logistics arrived in 35 minutes to safely transfer the grain batch.",
+        activeChars: ["coordinator"],
+        icon: "🚚",
+        badge: "Rapid Fleet Replacement"
+      },
+      {
+        step: 6,
+        title: "Failure 6: Warehouse Storage Unavailable",
+        category: "Storage Bottleneck",
+        desc: "Problem: The destination grain silo is unexpectedly at maximum capacity.<br><b class='text-emerald-400'>FarmUnity Solution:</b> The system activates secondary verified storage silos within 15km or accelerates same-day milling to avoid dampness and spoilage.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "Central silo was full, so the algorithm immediately diverted the grain to our secondary cold-chain hub.",
+        activeChars: ["coordinator", "buyer"],
+        icon: "🏚️",
+        badge: "Secondary Silo Routing"
+      },
+      {
+        step: 7,
+        title: "Failure 7: Milling Yield Deficit",
+        category: "Processing Defect",
+        desc: "Problem: Hulling produces less finished grain than expected due to weather stress.<br><b class='text-emerald-400'>FarmUnity Solution:</b> Platform automatically recalibrates invoice totals and instantly credits the buyer's balance without litigation.",
+        speaker: "Vikram (Corporate Buyer)",
+        avatar: "👨‍💼",
+        quote: "Milling yield was 3% lower; the platform adjusted our settlement invoice automatically in seconds.",
+        activeChars: ["coordinator", "buyer"],
+        icon: "📉",
+        badge: "Dynamic Yield Adjustment"
+      },
+      {
+        step: 8,
+        title: "Failure 8: Complete Rural Internet Blackout",
+        category: "Connectivity Loss",
+        desc: "Problem: Severe storms knock out 4G/5G towers across three districts.<br><b class='text-emerald-400'>FarmUnity Solution:</b> Field agents continue inspecting, generating digital receipts, and recording signatures completely offline with cryptographic timestamps.",
+        speaker: "Ananya (Coordinator)",
+        avatar: "👩‍💼",
+        quote: "Complete cell tower blackout! We completed 18 farmgate collections offline. Everything synced flawlessly once back in range.",
+        activeChars: ["farmer", "coordinator"],
+        icon: "📵",
+        badge: "Zero Data Loss Guarantee"
+      }
+    ];
+
+    function getDataset() {
+      return currentMode === 'journey' ? journeyScenes : failureScenes;
+    }
+
+    function getFarmerVector() {
+      return `
+        <div class="flex flex-col items-center anim-float" style="animation-duration: 3.2s;">
+          <div class="relative">
+            <svg width="110" height="130" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-xl">
+              <g transform="translate(10, 50) rotate(-15)">
+                <path d="M15 60 C15 30, 25 10, 40 0 C30 20, 25 40, 25 60 Z" fill="#F59E0B"/>
+                <path d="M22 65 C20 40, 35 15, 55 5 C45 25, 35 45, 30 65 Z" fill="#FBBF24"/>
+                <circle cx="42" cy="8" r="4" fill="#D97706"/>
+                <circle cx="53" cy="14" r="4" fill="#D97706"/>
+              </g>
+              <path d="M35 85 L85 85 L95 135 L25 135 Z" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="2"/>
+              <rect x="52" y="70" width="16" height="18" fill="#D97706" rx="3"/>
+              <ellipse cx="60" cy="56" rx="22" ry="25" fill="#D97706"/>
+              <path d="M48 64 Q60 62 72 64 Q60 74 48 64 Z" fill="#1F2937"/>
+              <path d="M52 68 Q60 76 68 68" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="2.5" fill="#111827"/>
+              <circle cx="68" cy="52" r="2.5" fill="#111827"/>
+              <ellipse cx="60" cy="38" rx="28" ry="16" fill="#F59E0B"/>
+              <path d="M32 38 C35 18, 85 18, 88 38 C80 26, 40 26, 32 38 Z" fill="#D97706"/>
+              <path d="M32 38 Q25 55 22 75 Q28 75 35 50 Z" fill="#F59E0B"/>
+            </svg>
+            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow">
+              Farmer
+            </span>
+          </div>
+          <span class="text-xs font-bold text-amber-400 mt-1">Ramesh</span>
+        </div>
+      `;
+    }
+
+    function getCoordinatorVector() {
+      return `
+        <div class="flex flex-col items-center anim-float" style="animation-duration: 3.5s; animation-delay: 0.4s;">
+          <div class="relative">
+            <svg width="110" height="130" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-xl">
+              <path d="M34 85 L86 85 L94 135 L26 135 Z" fill="#059669" stroke="#047857" stroke-width="2"/>
+              <rect x="42" y="100" width="36" height="26" rx="4" fill="#1E293B" stroke="#38BDF8" stroke-width="1.5"/>
+              <circle cx="60" cy="122" r="1.5" fill="#38BDF8"/>
+              <path d="M48 112 L54 116 L68 106" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="52" y="70" width="16" height="18" fill="#FBBF24" rx="3"/>
+              <ellipse cx="60" cy="55" rx="20" ry="23" fill="#FBBF24"/>
+              <path d="M38 52 C38 30, 82 30, 82 52 C78 36, 42 36, 38 52 Z" fill="#18181B"/>
+              <path d="M53 66 Q60 72 67 66" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="53" cy="53" r="2.5" fill="#111827"/>
+              <circle cx="67" cy="53" r="2.5" fill="#111827"/>
+            </svg>
+            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-slate-950 shadow">
+              Coordinator
+            </span>
+          </div>
+          <span class="text-xs font-bold text-emerald-400 mt-1">Ananya</span>
+        </div>
+      `;
+    }
+
+    function getBuyerVector() {
+      return `
+        <div class="flex flex-col items-center anim-float" style="animation-duration: 3.8s; animation-delay: 0.8s;">
+          <div class="relative">
+            <svg width="110" height="130" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-xl">
+              <path d="M32 85 L88 85 L96 135 L24 135 Z" fill="#1D4ED8" stroke="#1E40AF" stroke-width="2"/>
+              <polygon points="52,85 68,85 60,115" fill="#FFFFFF"/>
+              <polygon points="58,88 62,88 64,115 60,122 56,115" fill="#0284C7"/>
+              <rect x="52" y="70" width="16" height="18" fill="#FBBF24" rx="3"/>
+              <ellipse cx="60" cy="55" rx="20" ry="23" fill="#FBBF24"/>
+              <path d="M38 52 C38 28, 80 30, 82 48 C75 35, 45 35, 38 52 Z" fill="#0F172A"/>
+              <path d="M53 66 Q60 71 67 66" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="53" cy="53" r="2.5" fill="#111827"/>
+              <circle cx="67" cy="53" r="2.5" fill="#111827"/>
+            </svg>
+            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500 text-white shadow">
+              Buyer
+            </span>
+          </div>
+          <span class="text-xs font-bold text-blue-400 mt-1">Vikram</span>
+        </div>
+      `;
+    }
+
+    function renderStep1Enhanced() {
+      return `
+        <div class="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-4xl py-2">
+          <div class="flex items-center gap-4">
+            ${getFarmerVector()}
+            ${getCoordinatorVector()}
+            ${getBuyerVector()}
+          </div>
+
+          <div class="relative w-64 md:w-72 bg-slate-900 border-4 border-slate-700 rounded-[38px] p-3 shadow-2xl overflow-hidden anim-pulse-glow">
+            <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-800 rounded-full flex items-center justify-center gap-1 z-30">
+              <div class="w-2 h-2 rounded-full bg-slate-900"></div>
+              <div class="w-8 h-1 bg-slate-700 rounded-full"></div>
+            </div>
+
+            <div class="bg-gradient-to-b from-slate-950 via-emerald-950/80 to-slate-950 rounded-[28px] p-4 pt-8 text-white flex flex-col items-center min-h-[360px] border border-emerald-500/30 relative">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-lg shadow">🌱</div>
+                <div>
+                  <h4 class="font-extrabold text-sm tracking-tight text-emerald-300">FarmUnity</h4>
+                  <p class="text-[9px] text-slate-400">Select your login portal</p>
+                </div>
+              </div>
+
+              <div class="w-full space-y-2.5 my-auto z-10">
+                <div class="relative group cursor-pointer bg-gradient-to-r from-amber-500/20 to-amber-600/10 border-2 border-amber-500/70 rounded-xl p-2.5 flex items-center justify-between shadow-md transition hover:scale-105">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl p-1 bg-amber-500/20 rounded-lg">👨‍🌾</span>
+                    <div class="text-left">
+                      <div class="text-xs font-bold text-amber-300">Farmer Login</div>
+                      <div class="text-[10px] text-amber-200/70">List crops • View MSP</div>
+                    </div>
+                  </div>
+                  <span class="text-xs text-amber-400 font-bold">➔</span>
+                  <div class="absolute -right-3 -bottom-2 text-2xl tap-anim pointer-events-none drop-shadow">
+                    👆
+                  </div>
+                </div>
+
+                <div class="cursor-pointer bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500/60 rounded-xl p-2.5 flex items-center justify-between transition">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl p-1 bg-emerald-500/20 rounded-lg">👩‍💼</span>
+                    <div class="text-left">
+                      <div class="text-xs font-bold text-emerald-300">Coordinator</div>
+                      <div class="text-[10px] text-slate-400">Inspect & Pool Harvest</div>
+                    </div>
+                  </div>
+                  <span class="text-xs text-slate-500">➔</span>
+                </div>
+
+                <div class="cursor-pointer bg-blue-500/10 border border-blue-500/30 hover:border-blue-500/60 rounded-xl p-2.5 flex items-center justify-between transition">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl p-1 bg-blue-500/20 rounded-lg">👨‍💼</span>
+                    <div class="text-left">
+                      <div class="text-xs font-bold text-blue-300">Buyer Portal</div>
+                      <div class="text-[10px] text-slate-400">Bulk Orders & Escrow</div>
+                    </div>
+                  </div>
+                  <span class="text-xs text-slate-500">➔</span>
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-slate-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>Biometric & OTP Secured</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-2xl border border-emerald-500/30 text-left max-w-xs space-y-2.5">
+            <h5 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <span>✨</span> Smart Role-Based Experience
+            </h5>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              No complicated clutter. When Ramesh taps <b>Farmer</b>, he gets simplified buttons and visual cards. Vikram gets institutional volume charts.
+            </p>
+            <div class="space-y-1.5 pt-1 text-[11px] font-mono text-slate-400">
+              <div class="flex items-center gap-2 text-emerald-300"><span>✔</span> 3 Personalized Views</div>
+              <div class="flex items-center gap-2 text-emerald-300"><span>✔</span> Instant Aadhaar & GST Auth</div>
+              <div class="flex items-center gap-2 text-emerald-300"><span>✔</span> Works in 12 Regional Languages</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGeneralScene(item) {
+      let charsHtml = '';
+      if (item.activeChars.includes("farmer")) charsHtml += getFarmerVector();
+      if (item.activeChars.includes("coordinator")) charsHtml += getCoordinatorVector();
+      if (item.activeChars.includes("buyer")) charsHtml += getBuyerVector();
+
+      const isFailure = currentMode === 'failure';
+
+      return `
+        <div class="flex flex-col items-center justify-center gap-6 w-full max-w-4xl py-2">
+          <div class="flex items-center justify-center gap-6 md:gap-12">
+            ${charsHtml}
+          </div>
+
+          <div class="relative glass-panel rounded-2xl p-6 border ${isFailure ? 'border-rose-500/50 bg-rose-950/20' : 'border-emerald-500/30'} flex flex-col md:flex-row items-center gap-6 shadow-2xl max-w-2xl w-full">
+            <div class="w-24 h-24 rounded-2xl ${isFailure ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'} flex items-center justify-center text-5xl shadow-inner anim-pulse-glow flex-shrink-0">
+              ${item.icon || '🌾'}
+            </div>
+
+            <div class="text-left space-y-2 flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold uppercase tracking-wider ${isFailure ? 'text-rose-400' : 'text-emerald-400'}">
+                  ${item.badge || 'PROCESSED'}
+                </span>
+                <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300">
+                  ${isFailure ? 'FAILSAFE ENGINE' : 'ACTIVE PIPELINE'}
+                </span>
+              </div>
+              <h3 class="text-lg font-black text-white">${item.title}</h3>
+              <p class="text-xs md:text-sm text-slate-300 leading-relaxed">${item.desc}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCurrentScene() {
+      const dataset = getDataset();
+      const item = dataset[currentScene];
+
+      const total = dataset.length;
+      document.getElementById('stage-badge').innerText = `${currentMode === 'journey' ? 'STEP' : 'SCENARIO'} ${currentScene + 1} OF ${total} • ${item.title.toUpperCase()}`;
+      
+      const warningPill = document.getElementById('failure-warning-pill');
+      if (currentMode === 'failure') {
+        warningPill.classList.remove('hidden');
+      } else {
+        warningPill.classList.add('hidden');
+      }
+
+      const secPerStep = Math.floor(150 / total);
+      const currSec = (currentScene + 1) * secPerStep;
+      const minStr = String(Math.floor(currSec / 60)).padStart(2, '0');
+      const secStr = String(currSec % 60).padStart(2, '0');
+      document.getElementById('video-timer').innerText = `${minStr}:${secStr} / 02:30`;
+
+      const pct = ((currentScene + 1) / total) * 100;
+      document.getElementById('timeline-progress').style.width = `${pct}%`;
+
+      document.getElementById('current-step-display').innerText = currentScene + 1;
+      document.getElementById('total-step-display').innerText = total;
+
+      const viewport = document.getElementById('cinema-viewport');
+      if (currentMode === 'journey' && currentScene === 0) {
+        viewport.innerHTML = renderStep1Enhanced();
+      } else {
+        viewport.innerHTML = renderGeneralScene(item);
+      }
+
+      // High-contrast on-screen subtitles (CC)
+      document.getElementById('speaker-avatar').innerText = item.avatar || '💬';
+      document.getElementById('speaker-name').innerText = item.speaker;
+      document.getElementById('speaker-quote').innerText = `"${item.quote}"`;
+
+      const tagFarmer = document.getElementById('tag-farmer');
+      const tagCoord = document.getElementById('tag-coordinator');
+      const tagBuyer = document.getElementById('tag-buyer');
+
+      tagFarmer.style.opacity = item.activeChars.includes('farmer') ? '1' : '0.35';
+      tagCoord.style.opacity = item.activeChars.includes('coordinator') ? '1' : '0.35';
+      tagBuyer.style.opacity = item.activeChars.includes('buyer') ? '1' : '0.35';
+
+      document.getElementById('narrative-step-icon').innerText = item.icon || '🌱';
+      document.getElementById('narrative-title').innerText = item.title;
+      document.getElementById('narrative-category').innerText = item.category || 'System Action';
+      document.getElementById('narrative-desc').innerHTML = item.desc;
+
+      renderThumbnails();
+    }
+
+    function renderThumbnails() {
+      const dataset = getDataset();
+      const strip = document.getElementById('scene-strip');
+      strip.innerHTML = '';
+
+      dataset.forEach((item, idx) => {
+        const btn = document.createElement('button');
+        const isActive = idx === currentScene;
+        btn.onclick = () => {
+          currentScene = idx;
+          renderCurrentScene();
+        };
+
+        if (isActive) {
+          btn.className = 'p-2 rounded-xl text-xs flex flex-col items-center gap-1 border-2 border-emerald-400 bg-emerald-500/30 text-white font-bold shadow-lg scale-105 transition';
+        } else {
+          btn.className = 'p-2 rounded-xl text-xs flex flex-col items-center gap-1 border border-white/10 bg-white/5 text-slate-400 hover:text-white hover:border-emerald-400/40 transition';
+        }
+
+        btn.innerHTML = `
+          <span class="text-base">${item.icon || '🌱'}</span>
+          <span class="text-[10px] font-mono">${idx + 1}</span>
+        `;
+        strip.appendChild(btn);
+      });
+    }
+
+    function changeScene(direction) {
+      const dataset = getDataset();
+      currentScene += direction;
+      if (currentScene < 0) currentScene = dataset.length - 1;
+      if (currentScene >= dataset.length) currentScene = 0;
+      renderCurrentScene();
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('btn-play-pause');
+      const icon = document.getElementById('play-pause-icon');
+      const text = document.getElementById('play-pause-text');
+
+      if (isPlaying) {
+        icon.innerText = '⏸';
+        text.innerText = 'PAUSE';
+        btn.classList.replace('from-emerald-500', 'from-amber-500');
+        btn.classList.replace('to-teal-500', 'to-amber-600');
+
+        const delayMs = (4000 / playbackSpeed);
+        playInterval = setInterval(() => {
+          changeScene(1);
+        }, delayMs);
+      } else {
+        icon.innerText = '▶';
+        text.innerText = 'PLAY VIDEO';
+        btn.classList.replace('from-amber-500', 'from-emerald-500');
+        btn.classList.replace('to-amber-600', 'to-teal-500');
+        clearInterval(playInterval);
+      }
+    }
+
+    function setSpeed(spd) {
+      playbackSpeed = spd;
+      ['spd-1', 'spd-15', 'spd-2'].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'px-2.5 py-1 rounded bg-white/5 text-slate-400 hover:text-white';
+      });
+      if (spd === 1) document.getElementById('spd-1').className = 'px-2.5 py-1 rounded bg-white/20 text-white font-bold';
+      if (spd === 1.5) document.getElementById('spd-15').className = 'px-2.5 py-1 rounded bg-white/20 text-white font-bold';
+      if (spd === 2) document.getElementById('spd-2').className = 'px-2.5 py-1 rounded bg-white/20 text-white font-bold';
+
+      if (isPlaying) {
+        clearInterval(playInterval);
+        playInterval = setInterval(() => {
+          changeScene(1);
+        }, 4000 / playbackSpeed);
+      }
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      currentScene = 0;
+      if (isPlaying) togglePlay();
+
+      const btnJourney = document.getElementById('btn-mode-journey');
+      const btnFailure = document.getElementById('btn-mode-failure');
+      const stripTitle = document.getElementById('strip-title');
+
+      if (mode === 'journey') {
+        btnJourney.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow-md transition";
+        btnFailure.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition";
+        stripTitle.innerText = "The 17 Journey Milestones";
+      } else {
+        btnFailure.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-500 text-white shadow-md transition";
+        btnJourney.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition";
+        stripTitle.innerText = "8 Resilient Failsafe Scenarios";
+      }
+
+      renderCurrentScene();
+    }
+
+    function handleScrub(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      const dataset = getDataset();
+      currentScene = Math.min(dataset.length - 1, Math.max(0, Math.floor(ratio * dataset.length)));
+      renderCurrentScene();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentScene();
+    });
+  </script>
+</body>
+</html>

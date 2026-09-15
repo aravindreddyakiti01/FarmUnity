@@ -248,6 +248,29 @@ public class CooperativeFormationService {
                 .build();
     }
 
+    public List<BatchFormationResponse> getAllBatches() {
+        return cooperativeBatchRepository.findAll().stream()
+                .map(batch -> getBatchById(batch.getId()))
+                .collect(Collectors.toList());
+    }
+
+    public List<BatchFormationResponse> getBatchesForBuyer(Long buyerId) {
+        return cooperativeBatchRepository.findAll().stream()
+                .filter(b -> b.getBuyerRequirement() != null && b.getBuyerRequirement().getBuyer().getId().equals(buyerId))
+                .map(batch -> getBatchById(batch.getId()))
+                .collect(Collectors.toList());
+    }
+
+    public List<BatchFormationResponse> getBatchesForFarmer(Long farmerId) {
+        List<BatchMembership> memberships = batchMembershipRepository.findByFarmerId(farmerId);
+        Set<Long> batchIds = memberships.stream()
+                .map(m -> m.getCooperativeBatch().getId())
+                .collect(Collectors.toSet());
+        return batchIds.stream()
+                .map(this::getBatchById)
+                .collect(Collectors.toList());
+    }
+
     public record CandidateMembership(ProduceListing listing, BigDecimal allocatedQty, double distanceKm, String reason) {}
     public record EligibleCandidate(ProduceListing listing, double distanceKm, PriceResult priceResult) {}
     public record BatchFormationResult(List<CandidateMembership> members, BigDecimal totalAllocatedQty, BigDecimal shortfallQty, boolean isFulfilled) {}

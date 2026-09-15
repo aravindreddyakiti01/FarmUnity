@@ -1,6 +1,8 @@
 import api from './axios';
 
 export const batchesApi = {
-  formBatch: (buyerRequirementId) => api.post(`/batches/form/${buyerRequirementId}`),
+  getAll: () => api.get('/batches'),
+  getMyBatches: () => api.get('/batches/my'),
   getById: (batchId) => api.get(`/batches/${batchId}`),
+  formBatch: (buyerRequirementId) => api.post(`/batches/form/${buyerRequirementId}`),
 };

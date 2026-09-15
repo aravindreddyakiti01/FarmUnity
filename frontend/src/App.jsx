@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { TranslationProvider } from './hooks/useTranslation';
 import { Layout } from './components/layout/Layout';
 
 // Pages
@@ -24,6 +25,8 @@ import { BatchFormationPage } from './pages/coordinator/BatchFormationPage';
 import { PickupPage } from './pages/coordinator/PickupPage';
 import { MillingPage } from './pages/coordinator/MillingPage';
 
+import { FarmerOpportunitiesPage } from './pages/farmer/FarmerOpportunitiesPage';
+import { FarmerOrdersPage } from './pages/farmer/FarmerOrdersPage';
 import { AgreementPage } from './pages/shared/AgreementPage';
 import { CommitmentLedgerPage } from './pages/shared/CommitmentLedgerPage';
 import { SettlementDashboard } from './pages/shared/SettlementDashboard';
@@ -58,9 +61,10 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
+        <TranslationProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
               <Route index element={<LandingPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
@@ -68,6 +72,14 @@ export default function App() {
               {/* Farmer Routes */}
               <Route
                 path="farmer"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <FarmerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="farmer/listings"
                 element={
                   <ProtectedRoute allowedRoles={['FARMER']}>
                     <FarmerDashboard />
@@ -83,6 +95,30 @@ export default function App() {
                 }
               />
               <Route
+                path="farmer/opportunities"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <FarmerOpportunitiesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="farmer/orders"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <FarmerOrdersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="farmer/payments"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <FarmerOrdersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="farmer/negotiate/:agreementId"
                 element={
                   <ProtectedRoute allowedRoles={['FARMER']}>
@@ -94,6 +130,30 @@ export default function App() {
               {/* Buyer Routes */}
               <Route
                 path="buyer"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <BuyerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="buyer/requirements"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <BuyerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="buyer/cooperatives"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <BuyerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="buyer/orders"
                 element={
                   <ProtectedRoute allowedRoles={['BUYER']}>
                     <BuyerDashboard />
@@ -128,6 +188,22 @@ export default function App() {
               {/* Coordinator Routes */}
               <Route
                 path="coordinator"
+                element={
+                  <ProtectedRoute allowedRoles={['COORDINATOR']}>
+                    <CoordinatorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="coordinator/batches"
+                element={
+                  <ProtectedRoute allowedRoles={['COORDINATOR']}>
+                    <CoordinatorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="coordinator/exceptions"
                 element={
                   <ProtectedRoute allowedRoles={['COORDINATOR']}>
                     <CoordinatorDashboard />
@@ -178,6 +254,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </TranslationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

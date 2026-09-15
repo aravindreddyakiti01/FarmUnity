@@ -1,348 +1,231 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { listingsApi } from '../../api/listings';
+import { batchesApi } from '../../api/batches';
+import { requirementsApi } from '../../api/requirements';
+import { useAuth } from '../../hooks/useAuth';
+import { useTranslation } from '../../hooks/useTranslation';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/StatusBadge';
-import { MoistureCheckBadge } from '../../components/verification/MoistureCheckBadge';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { 
-  Sprout, 
-  PlusCircle, 
-  ArrowRight, 
-  Scale, 
-  Clock, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertCircle,
-  HelpCircle,
-  Coins
+import { EmptyState } from '../../components/ui/EmptyState';
+import {
+  Sprout,
+  PlusCircle,
+  TrendingUp,
+  Clock,
+  Compass,
+  CheckCircle2,
+  ChevronRight,
+  MapPin,
+  Scale,
+  Calendar,
 } from 'lucide-react';
 
 export const FarmerDashboard = () => {
-  const { data: listings, isLoading, refetch } = useQuery({
-    queryKey: ['listings', 'my'],
+  const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const { data: listings = [], isLoading: listingsLoading } = useQuery({
+    queryKey: ['my-listings'],
     queryFn: async () => {
       const res = await listingsApi.getMyListings();
       return res.data;
     },
   });
 
-  const handleSubmitForVerification = async (listingId) => {
-    try {
-      await listingsApi.submitForVerification(listingId);
-      refetch();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to submit for verification');
-    }
-  };
+  const { data: batches = [] } = useQuery({
+    queryKey: ['my-batches'],
+    queryFn: async () => {
+      const res = await batchesApi.getMyBatches();
+      return res.data;
+    },
+  });
 
-  const totalLots = listings?.length || 0;
-  const verifiedLots = listings?.filter(l => l.status === 'VERIFIED' || l.status === 'POOLED' || l.status === 'AGREED' || l.status === 'DELIVERED' || l.status === 'SETTLED')?.length || 0;
-  const totalVerifiedQty = listings?.reduce((sum, l) => sum + (l.verifiedQty || 0), 0) || 0;
+  const { data: requirements = [] } = useQuery({
+    queryKey: ['active-requirements'],
+    queryFn: async () => {
+      const res = await requirementsApi.getAll();
+      return res.data;
+    },
+  });
+
+  // Derived metrics
+  const totalListedKg = listings.reduce((sum, l) => sum + (Number(l.declaredQty) || 0), 0);
+  const activeBatchesCount = batches.length;
+  const verifiedLotsCount = listings.filter((l) => l.status === 'VERIFIED_COMPATIBLE').length;
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
-            <Sprout className="w-3.5 h-3.5 text-green-700" />
-            <span>Smallholder Supply Hub</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-            My Harvest & Produce Lots
-          </h1>
-          <p className="text-xs sm:text-sm text-stone-600 max-w-xl leading-relaxed">
-            List your harvest, invite a local coordinator for physical moisture & grade certification, and receive guaranteed wholesale offers.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={`Good morning, ${user?.name || 'Farmer'}`}
+        description="Manage your harvest lots, review cooperative buyer opportunities, and track your verified payouts."
+        action={
+          <Link to="/farmer/listings/new">
+            <Button variant="primary" size="md" icon={PlusCircle}>
+              {t('sell_produce')}
+            </Button>
+          </Link>
+        }
+      />
 
-        <Link
-          to="/farmer/listings/new"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-green-700 hover:bg-green-800 text-white text-sm font-bold rounded-2xl shadow-sm hover:shadow transition shrink-0"
-        >
-          <PlusCircle className="w-5 h-5" />
-          <span>List New Produce</span>
-        </Link>
-      </div>
-
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center text-stone-700">
-            <Sprout className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-stone-900">{totalLots}</div>
-            <div className="text-xs font-bold text-stone-500 uppercase tracking-wide">Total Listed Lots</div>
+      {/* Farm Activity Snapshot */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-xs">
+          <p className="text-xs text-stone-500 font-medium">Produce Listed</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl font-bold text-stone-900">{listings.length}</span>
+            <span className="text-xs text-stone-500">lots ({totalListedKg.toLocaleString()} kg)</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 border border-amber-200/60">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-amber-900">{verifiedLots}</div>
-            <div className="text-xs font-bold text-stone-500 uppercase tracking-wide">Quality Certified</div>
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-xs">
+          <p className="text-xs text-stone-500 font-medium">Quality Verified</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl font-bold text-green-800">{verifiedLotsCount}</span>
+            <span className="text-xs text-stone-500">certified lots</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-700 border border-green-200/60">
-            <Scale className="w-6 h-6" />
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-xs">
+          <p className="text-xs text-stone-500 font-medium">Active Batches</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl font-bold text-stone-900">{activeBatchesCount}</span>
+            <span className="text-xs text-stone-500">cooperatives</span>
           </div>
-          <div>
-            <div className="text-2xl font-black text-green-800">{totalVerifiedQty.toLocaleString()} kg</div>
-            <div className="text-xs font-bold text-stone-500 uppercase tracking-wide">Total Verified Weight</div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-xs">
+          <p className="text-xs text-stone-500 font-medium">Settlement Status</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl font-bold text-green-800">Protected</span>
+            <span className="text-xs text-stone-500">in ledger</span>
           </div>
         </div>
       </div>
 
-      {/* Main Listings View */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-stone-900">Current Produce Lots</h2>
-            <p className="text-xs text-stone-500">Every lot is tracked through inspection, cooperative pooling, and final payout.</p>
-          </div>
-          <span className="text-xs font-bold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">
-            {listings?.length || 0} Lots
-          </span>
-        </div>
+      {/* High-Priority Matched Opportunity Banner */}
+      {requirements.length > 0 && (
+        <div className="p-5 rounded-xl bg-green-50 border border-green-200 text-stone-900 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-200/70 text-green-900 text-xs font-semibold mb-2">
+                <Compass className="w-3.5 h-3.5" />
+                <span>Compatible Bulk Demand Nearby</span>
+              </div>
+              <h3 className="text-lg font-bold text-stone-900">
+                {requirements[0].product?.toUpperCase()} &mdash; Institutional Need for {Number(requirements[0].quantityKg).toLocaleString()} kg
+              </h3>
+              <p className="text-xs text-stone-600 mt-1 max-w-2xl">
+                Destination: {requirements[0].destination || 'Bengaluru Central'} &middot; Price Target: ₹{requirements[0].priceMin || 25} - ₹{requirements[0].priceMax || 28}/kg.
+                Your verified lot is eligible to contribute to this bulk batch.
+              </p>
 
-        {isLoading ? (
-          <div className="py-12"><LoadingSpinner text="Retrieving harvest lots..." /></div>
-        ) : listings?.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-stone-200 rounded-2xl p-8">
-            <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-3 text-stone-400">
-              <Sprout className="w-6 h-6" />
+              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-stone-700">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-700" /> Compatible Crop Variety
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-700" /> Moisture Tolerances Met
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-700" /> Price Range Overlapping
+                </span>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-stone-800">No produce lots added yet</h3>
-            <p className="text-xs text-stone-500 max-w-sm mx-auto mt-1 mb-4">
-              Add your paddy, wheat, maize, pulses, or other harvested staple to connect with nearby pooling opportunities.
-            </p>
-            <Link
-              to="/farmer/listings/new"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl transition"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Create Your First Produce Lot</span>
+
+            <Link to="/farmer/opportunities">
+              <Button variant="primary" size="md">
+                Review Opportunity
+              </Button>
             </Link>
           </div>
+        </div>
+      )}
+
+      {/* My Produce Lots */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-stone-900">{t('my_produce')}</h2>
+          <Link to="/farmer/listings/new" className="text-xs font-semibold text-green-800 hover:underline">
+            + {t('sell_produce')}
+          </Link>
+        </div>
+
+        {listings.length === 0 && !listingsLoading ? (
+          <EmptyState
+            icon={Sprout}
+            title="No produce lots listed yet"
+            description="Add your first harvest lot to connect with institutional buyers and local cooperative batches."
+            actionLabel={t('sell_produce')}
+            onAction={() => (window.location.href = '/farmer/listings/new')}
+          />
         ) : (
-          <div className="space-y-4">
-            {listings?.map((l) => {
-              const isPending = l.status === 'PENDING_VERIFICATION' || l.status === 'CREATED';
-              const isVerified = l.status === 'VERIFIED';
-              const isPooled = l.status === 'POOLED' || l.status === 'AGREED';
-              const isDone = l.status === 'DELIVERED' || l.status === 'SETTLED';
-
-              return (
-                <div 
-                  key={l.id} 
-                  className="p-5 rounded-2xl border border-stone-200 hover:border-stone-300 transition bg-stone-50/50 flex flex-col lg:flex-row lg:items-center justify-between gap-6"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="px-3 py-1 rounded-lg bg-stone-200/70 text-stone-800 text-xs font-black uppercase tracking-wider">
-                        {l.crop}
-                      </span>
-                      <span className="text-xs text-stone-500 font-medium">
-                        {l.variety || 'Standard grade'}
-                      </span>
-                      <StatusBadge status={l.status} />
-                    </div>
-
-                    <div className="flex items-center gap-6 pt-1 text-xs text-stone-600 flex-wrap">
-                      <div>
-                        <span className="text-stone-400 block text-[10px] uppercase font-bold">Estimated by You</span>
-                        <span className="font-bold text-stone-800 text-sm">{Number(l.declaredQty).toLocaleString()} kg</span>
-                      </div>
-                      
-                      <div className="border-l border-stone-200 pl-4">
-                        <span className="text-stone-400 block text-[10px] uppercase font-bold">Verified on Farm</span>
-                        {l.verifiedQty ? (
-                          <span className="font-black text-green-700 text-sm">{Number(l.verifiedQty).toLocaleString()} kg</span>
-                        ) : (
-                          <span className="text-amber-700 font-medium italic">Pending Visit</span>
-                        )}
-                      </div>
-
-                      <div className="border-l border-stone-200 pl-4">
-                        <span className="text-stone-400 block text-[10px] uppercase font-bold">Floor Price</span>
-                        <span className="font-bold text-green-800 text-sm">₹{Number(l.minPricePerKg).toFixed(2)}/kg</span>
-                      </div>
-
-                      {l.moistureReading && (
-                        <div className="border-l border-stone-200 pl-4">
-                          <span className="text-stone-400 block text-[10px] uppercase font-bold">Moisture Content</span>
-                          <MoistureCheckBadge moisture={l.moistureReading} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Explainable Next Steps Banner */}
-                    <div className="pt-2 text-[11px] text-stone-500 flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                      {isPending && <span>Next step: Coordinator schedules an on-farm visit to test moisture & calibrate weight.</span>}
-                      {isVerified && <span>Next step: Crop is verified and ready. Our engine will group this with nearby farms for bulk buyers.</span>}
-                      {isPooled && <span>Next step: Crop is matched in a bulk batch. Waiting for buyer deposit into escrow.</span>}
-                      {isDone && <span>Delivery complete! Payment settled proportionally on verified delivered weight.</span>}
-                    </div>
+          <div className="grid gap-3">
+            {listings.map((lot) => (
+              <div
+                key={lot.id}
+                className="p-4 rounded-xl bg-white border border-stone-200 hover:border-stone-300 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-stone-900 capitalize">
+                      {lot.crop} ({lot.variety || 'Standard'})
+                    </span>
+                    <StatusBadge status={lot.status} />
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 shrink-0 pt-2 lg:pt-0">
-                    {l.status === 'CREATED' && (
-                      <button
-                        onClick={() => handleSubmitForVerification(l.id)}
-                        className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Request Physical Inspection</span>
-                      </button>
-                    )}
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500">
+                    <span className="flex items-center gap-1">
+                      <Scale className="w-3.5 h-3.5 text-stone-400" />
+                      Declared: <strong>{Number(lot.declaredQty).toLocaleString()} kg</strong>
+                      {lot.verifiedQty && (
+                        <span className="text-green-800 font-semibold ml-1">
+                          (Verified: {Number(lot.verifiedQty).toLocaleString()} kg)
+                        </span>
+                      )}
+                    </span>
 
-                    {l.status === 'POOLED' && (
-                      <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200">
-                        In Cooperative Pool
+                    {lot.moistureReading && (
+                      <span>
+                        Moisture: <strong>{lot.moistureReading}%</strong>
                       </span>
                     )}
 
-                    {l.status === 'AGREED' && (
-                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                        Buyer Agreement Confirmed
+                    <span>
+                      Floor: <strong>₹{lot.minPricePerKg}/kg</strong>
+                    </span>
+
+                    {lot.harvestDate && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                        {lot.harvestDate}
                       </span>
                     )}
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {lot.status === 'DRAFT' && (
+                    <Link to={`/farmer/listings`}>
+                      <Button variant="outline" size="sm">
+                        Submit for Verification
+                      </Button>
+                    </Link>
+                  )}
+                  {lot.status === 'IN_BATCH' && (
+                    <Link to={`/batches/${batches[0]?.id || 1}`}>
+                      <Button variant="secondary" size="sm">
+                        View Batch
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </div>
-
-      {/* Section 10: Buyer Opportunities Near You */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-green-700">Cooperative Pooling Demand</div>
-            <h2 className="text-lg font-bold text-stone-900">Buyer Opportunities Near You</h2>
-            <p className="text-xs text-stone-500">
-              Wholesale buyers requisitioning bulk quantities. FarmUnity aggregates nearby farms to fulfill these orders.
-            </p>
-          </div>
-          <span className="text-xs font-bold text-green-800 bg-green-50 px-3 py-1 rounded-full border border-green-200">
-            2 Active Bulk Demands
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 hover:border-green-300 transition space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-md bg-stone-200 text-stone-800 font-black text-xs uppercase">Paddy</span>
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Bangalore Central Hostel</span>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-stone-900">5,000 kg Bulk Requirement</div>
-              <p className="text-xs text-stone-500 mt-0.5">FarmUnity has pooled 3,700 kg &middot; 1,300 kg remaining</p>
-            </div>
-            <div className="p-3 bg-white rounded-xl border border-stone-200/80 text-xs space-y-1">
-              <div className="flex justify-between text-stone-600">
-                <span>Target Price:</span>
-                <span className="font-bold text-green-800">₹27.00 – ₹31.00 / kg</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
-                <span>Moisture Standard:</span>
-                <span className="font-bold text-stone-800">12.0% – 14.0%</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
-                <span>Delivery Window:</span>
-                <span className="font-bold text-stone-800">Next 7–10 Days</span>
-              </div>
-            </div>
-            <div className="pt-1 flex items-center justify-between">
-              <span className="text-[11px] text-stone-500">Your lot can contribute <strong>500 kg</strong></span>
-              <Link
-                to="/agreements/1"
-                className="px-3.5 py-1.5 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
-              >
-                Join Cooperative
-              </Link>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 hover:border-green-300 transition space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-md bg-stone-200 text-stone-800 font-black text-xs uppercase">Wheat</span>
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Apollo Hospital Kitchens</span>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-stone-900">3,000 kg Sharbati Wheat</div>
-              <p className="text-xs text-stone-500 mt-0.5">FarmUnity has pooled 1,800 kg &middot; 1,200 kg remaining</p>
-            </div>
-            <div className="p-3 bg-white rounded-xl border border-stone-200/80 text-xs space-y-1">
-              <div className="flex justify-between text-stone-600">
-                <span>Target Price:</span>
-                <span className="font-bold text-green-800">₹28.00 – ₹32.00 / kg</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
-                <span>Moisture Standard:</span>
-                <span className="font-bold text-stone-800">11.0% – 13.0%</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
-                <span>Delivery Window:</span>
-                <span className="font-bold text-stone-800">Next 12–15 Days</span>
-              </div>
-            </div>
-            <div className="pt-1 flex items-center justify-between">
-              <span className="text-[11px] text-stone-500">Matches your crop &amp; location</span>
-              <Link
-                to="/agreements/1"
-                className="px-3.5 py-1.5 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
-              >
-                Join Cooperative
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Educational Walkthrough Card */}
-      <div className="bg-amber-50/70 border border-amber-200 rounded-3xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-100 text-amber-800 rounded-xl">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-amber-900">How You Get Paid Through FarmUnity</h3>
-            <p className="text-xs text-amber-700">Simple, transparent, and protected against middlemen deductions.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-amber-900 pt-2">
-          <div className="bg-white/80 p-4 rounded-xl border border-amber-200/60 space-y-1">
-            <span className="font-bold text-amber-800 block">1. On-Farm Verification</span>
-            <p className="text-amber-700 leading-relaxed">
-              Your declared quantity is an estimate. Payment is strictly computed on the verified weight confirmed by the local coordinator.
-            </p>
-          </div>
-
-          <div className="bg-white/80 p-4 rounded-xl border border-amber-200/60 space-y-1">
-            <span className="font-bold text-amber-800 block">2. Protected Buyer Escrow</span>
-            <p className="text-amber-700 leading-relaxed">
-              Before your crop leaves the collection point, the institutional buyer deposits full contract funds into an escrow holding account.
-            </p>
-          </div>
-
-          <div className="bg-white/80 p-4 rounded-xl border border-amber-200/60 space-y-1">
-            <span className="font-bold text-amber-800 block">3. Instant Proportional Release</span>
-            <p className="text-amber-700 leading-relaxed">
-              Upon physical gate delivery, funds release directly to your account with zero broker commission deductions.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
